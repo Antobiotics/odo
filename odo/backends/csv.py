@@ -64,6 +64,7 @@ class PipeSniffer(csv.Sniffer):
     >>> csv.Sniffer().sniff(data).delimiter  # can't handle every case :(
     ','
     """
+
     def __init__(self, *args, **kwargs):
         csv.Sniffer.__init__(self, *args, **kwargs)
         self.preferred = [',', '\t', ';', '|', ':', ' ']
@@ -83,6 +84,7 @@ class ModeProxy(object):
     """Gzipped files use int enums for mode so we want to proxy it to provide
     The proper string version.
     """
+
     def __init__(self, file, mode):
         self._file = file
         self.mode = mode
@@ -345,16 +347,19 @@ def _csv_to_dataframe(c, dshape=None, chunksize=None, **kwargs):
 
     kwargs = keyfilter(keywords(pd.read_csv).__contains__, kwargs)
     with c.open() as f:
-        return pd.read_csv(f,
-                           header=header,
-                           sep=sep,
-                           encoding=encoding,
-                           dtype=dtypes,
-                           parse_dates=parse_dates,
-                           names=names,
-                           chunksize=chunksize,
-                           usecols=usecols,
-                           **kwargs)
+        result = pd.read_csv(f,
+                             header=header,
+                             sep=sep,
+                             encoding=encoding,
+                             dtype=dtypes,
+                             parse_dates=parse_dates,
+                             names=names,
+                             chunksize=chunksize,
+                             usecols=usecols,
+                             **kwargs)
+        if chunksize is not None:
+            result = pd.concat(result, ignore_index=True)
+        return result
 
 
 @convert.register(chunks(pd.DataFrame), (Temp(CSV), CSV), cost=10.0)
